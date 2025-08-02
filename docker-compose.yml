@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: inventrack_db
+      POSTGRES_USER: inventrack_user
+      POSTGRES_PASSWORD: inv123
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backendnet
+  api:
+    build: .
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://inventrack_user:inv123@db:5432/inventrack_db
+    depends_on:
+      - db
+    volumes:
+      - ./app:/usr/src/app/app
+    ports:
+      - '8000:8000'
+    networks:
+      - backendnet
+volumes:
+  postgres_data:
+networks:
+  backendnet:
+    driver: bridge
